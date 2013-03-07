@@ -1,0 +1,16 @@
+
+var i;
+
+i = 10;
+
+while _neq(i, 1) {
+	var c = i;
+	c += 47;
+
+	if _eq(i, 6) c = 66;
+	if _eq(i, 5) c = 70;
+	if _neq(i, 2) out(c);
+
+	i -= 1;
+}
+

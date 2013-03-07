@@ -1,0 +1,334 @@
+//
+//  hanoi.bfc - A towers of hanoi written in bfc
+//  Copyright (C) 2004  Clifford Wolf <clifford@clifford.at>
+//
+//  This program is free software; you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation; either version 2 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+//  02111-1307  USA
+//
+
+
+// --- global variables (in optimized order) ---
+var st_ctx_fot.39, st_ctx_n.39, st_ctx_s.39;
+
+var stack_size1.40;
+var stack_size2.40;
+var stack_size0.40;
+
+stack_size1.40 = 0;
+stack_size2.40 = 0;
+stack_size0.40 = 0;
+
+var st_ctx_p = 0;
+
+
+// --- terminal ---
+macro clearscreen()
+{
+	// perl genascii.pl '\e[H\e[2J'
+	var char = 0;
+	char += 27; out(char); char += 64; out(char); char -= 19; out(char);
+	char -= 45; out(char); char += 64; out(char); char -= 41; out(char);
+	char += 24; out(char);
+}
+
+macro setcursor(x, y)
+{
+	// perl perl genascii.pl '\e[;H'
+	var char = 0;
+	char += 27; out(char);
+	char += 64; out(char); outnum(y);
+	char -= 32; out(char); outnum(x);
+	char += 13; out(char);
+}
+
+macro print_slice(stack, size, pos, char)
+{
+	var x = 16;
+	var y = 14;
+	var t, mini;
+
+	if _eq(stack, 0) {
+		x += 5;
+	}
+	if _eq(stack, 1) {
+		y += 10;
+	}
+
+	_mul(t, stack, 25);
+	x += t; x,x -= size;
+
+	if _eq(stack, 2) {
+		x -= 5;
+	}
+
+	y -= pos;
+	setcursor(x, y);
+
+	if _eq(char, 88) out(120);
+	else out(char);
+
+	t = size;
+	if (t) t -= 1;
+	while (t) {
+		out(char);
+		out(char);
+		t -= 1;
+	}
+
+	out(char);
+
+	t = size;
+	if (t) t -= 1;
+	while (t) {
+		out(char);
+		out(char);
+		t -= 1;
+	}
+
+	if _eq(char, 88) out(120);
+	else out(char);
+}
+
+macro delay()
+{
+	var a = 200;
+	while (a) {
+		var b = 200;
+		while (b) {
+			var c = 100;
+			while (c) c -= 1;
+			b -= 1;
+		}
+		a -= 1;
+	}
+}
+
+
+// ---- size stacks ---
+macro stack_size10_push(stack, val)
+{
+	a4w(stack, stack.40, val);
+	stack.40 += 1;
+}
+
+macro stack_size10_pop(stack, val)
+{
+	stack.40 -= 1;
+	a4r(stack, stack.40, val);
+}
+
+macro stack_size_push(num, val)
+{
+	if _eq(num, 0) stack_size10_push(stack_size0, val);
+	if _eq(num, 1) stack_size10_push(stack_size1, val);
+	if _eq(num, 2) stack_size10_push(stack_size2, val);
+}
+
+macro stack_size_pop(num, val)
+{
+	if _eq(num, 0) stack_size10_pop(stack_size0, val);
+	if _eq(num, 1) stack_size10_pop(stack_size1, val);
+	if _eq(num, 2) stack_size10_pop(stack_size2, val);
+}
+
+
+// --- move around ---
+macro height_get(num, val)
+{
+	if _eq(num, 0) { val = stack_size0.40; }
+	if _eq(num, 1) { val = stack_size1.40; }
+	if _eq(num, 2) { val = stack_size2.40; }
+}
+
+macro move_slice(from, to)
+{
+	var size, from_pos, to_pos;
+	var printslice_cyle = 2;
+
+	height_get(from, from_pos);
+
+	stack_size_pop(from, size);
+	stack_size_push(to, size);
+
+	height_get(to, to_pos);
+
+	while (printslice_cyle) {
+		var p_stack, p_pos, p_char;
+
+		printslice_cyle -= 1;
+		if (printslice_cyle) { p_stack = from; p_pos = from_pos; p_char = 32; }
+		else { p_stack = to; p_pos = to_pos; p_char = 88; }
+		print_slice(p_stack, size, p_pos, p_char);
+	}
+
+	out(10);
+	setcursor(1, 1);
+	delay();
+}
+
+
+// --- stack ctx ---
+macro ctx_push(f, o, t, n, s)
+{
+	var fot = 0;
+	var tmp;
+
+	tmp = f; while (tmp) { fot += 1; tmp -= 1; }
+	tmp = o; while (tmp) { fot += 3; tmp -= 1; }
+	tmp = t; while (tmp) { fot += 9; tmp -= 1; }
+
+	a4w(st_ctx_fot, st_ctx_p, fot);
+	a4w(st_ctx_n, st_ctx_p, n);
+	a4w(st_ctx_s, st_ctx_p, s);
+	st_ctx_p += 1;
+}
+
+macro ctx_pop(f, o, t, n, s)
+{
+	st_ctx_p -= 1;
+
+	a4r(st_ctx_fot, st_ctx_p, f);
+	a4r(st_ctx_n, st_ctx_p, n);
+	a4r(st_ctx_s, st_ctx_p, s);
+
+	o, t = 0;
+	while _lt(8, f) { f -=9; t += 1; }
+	while _lt(2, f) { f -=3; o += 1; }
+}
+
+
+// --- hanoi logic ---
+macro hanoi(from, other, to, num)
+{
+	var state, depth, tmp;
+	state, depth = 1;
+
+	while (depth) {
+		while _neq(state, 4)
+		{
+			if (num) {
+				var ctx_do_push = 0;
+				var state1, state3 = 0;
+
+				if _eq(state, 1) { ctx_do_push = 1; state1 = 1; }
+				if _eq(state, 3) { ctx_do_push = 1; state3 = 1; }
+
+				if (ctx_do_push)
+					ctx_push(from, other, to, num, state);
+
+				if (state1) {
+					tmp = other; other = to; to = tmp;
+					num -= 1; state = 0; depth += 1;
+				}
+
+				if (state3) {
+					tmp = other; other = from; from = tmp;
+					num -= 1; state = 0; depth += 1;
+				}
+			}
+
+			if _eq(state, 2)
+				move_slice(from, to);
+
+			state += 1;
+		}
+		depth -= 1;
+		if (depth) {
+			ctx_pop(from, other, to, num, state);
+			state += 1;
+		}
+	}
+}
+
+
+// --- main ---
+macro title1()
+{
+	// perl genascii.pl '\e[2;27HTowers of Hanoi in Brainf*ck'
+	var char = 0;
+	char += 27; out(char); char += 64; out(char); char -= 41; out(char);
+	char +=  9; out(char); char -=  9; out(char); char +=  5; out(char);
+	char += 17; out(char); char += 12; out(char); char += 27; out(char);
+	char +=  8; out(char); char -= 18; out(char); char += 13; out(char);
+	char +=  1; out(char); char -= 83; out(char); char += 79; out(char);
+	char -=  9; out(char); char -= 70; out(char); char += 40; out(char);
+	char += 25; out(char); char += 13; out(char); char +=  1; out(char);
+	char -=  6; out(char); char -= 73; out(char); char += 73; out(char);
+	char +=  5; out(char); char -= 78; out(char); char += 34; out(char);
+	char += 48; out(char); char -= 17; out(char); char +=  8; out(char);
+	char +=  5; out(char); char -=  8; out(char); char -= 60; out(char);
+	char += 57; out(char); char +=  8; out(char);
+}
+
+macro title2()
+{
+	// perl genascii.pl '\e[3;15HWritten by Clifford Wolf <http://www.clifford.at/bfcpu/>'
+	var char = 0;
+	char += 27; out(char); char += 64; out(char); char -= 40; out(char);
+	char +=  8; out(char); char -= 10; out(char); char +=  4; out(char);
+	char += 19; out(char); char += 15; out(char); char += 27; out(char);
+	char -=  9; out(char); char += 11; out(char); char +=  0; out(char);
+	char -= 15; out(char); char +=  9; out(char); char -= 78; out(char);
+	char += 66; out(char); char += 23; out(char); char -= 89; out(char);
+	char += 35; out(char); char += 41; out(char); char -=  3; out(char);
+	char -=  3; out(char); char +=  0; out(char); char +=  9; out(char);
+	char +=  3; out(char); char -= 14; out(char); char -= 68; out(char);
+	char += 55; out(char); char += 24; out(char); char -=  3; out(char);
+	char -=  6; out(char); char -= 70; out(char); char += 28; out(char);
+	char += 44; out(char); char += 12; out(char); char +=  0; out(char);
+	char -=  4; out(char); char -= 54; out(char); char -= 11; out(char);
+	char +=  0; out(char); char += 72; out(char); char +=  0; out(char);
+	char +=  0; out(char); char -= 73; out(char); char += 53; out(char);
+	char +=  9; out(char); char -=  3; out(char); char -=  3; out(char);
+	char +=  0; out(char); char +=  9; out(char); char +=  3; out(char);
+	char -= 14; out(char); char -= 54; out(char); char += 51; out(char);
+	char += 19; out(char); char -= 69; out(char); char += 51; out(char);
+	char +=  4; out(char); char -=  3; out(char); char += 13; out(char);
+	char +=  5; out(char); char -= 70; out(char); char += 15; out(char);
+}
+
+macro init()
+{
+	clearscreen();
+	title1();
+	title2();
+
+	var slice = 0;
+	var size = 9;
+	var pos = 3;
+
+	while _neq(slice, 10) {
+		var fill = 45;
+
+		if (slice) fill += 43;
+
+		while (pos) {
+			if (pos) pos -= 1;
+			print_slice(pos, size, slice, fill);
+		}
+
+		if (slice) {
+			stack_size10_push(stack_size0, size);
+			if (size) size -= 1;
+		}
+
+		slice += 1;
+		pos = 1;
+	}
+}
+
+init();
+hanoi(0, 1, 2, 8);
+

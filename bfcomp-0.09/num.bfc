@@ -1,0 +1,96 @@
+
+// An interpreter for Philip Bernhart's "num" language
+// Written by Clifford Wolf <clifford@clifford.at>
+// Run with './bfrun num.bf num.input'
+
+var reg_1 = 0;
+var reg_2 = 0;
+var reg_3 = 0;
+var reg_4 = 0;
+var reg_5 = 0;
+var reg_6 = 0;
+var reg_7 = 0;
+var reg_8 = 0;
+var reg_9 = 0;
+
+var input;
+
+in(input);
+while (input)
+{
+	if _eq(input, 10) input = 0;
+	if _eq(input, 32) input = 0;
+	if _eq(input, 48) input = 0;
+
+	if (input)
+	{
+		var val;
+		var c_reg;
+		var c_type;
+		var c_num;
+
+		c_reg=input;
+		c_reg-=48;
+
+		if _eq(c_reg, 1) val = reg_1;
+		if _eq(c_reg, 2) val = reg_2;
+		if _eq(c_reg, 3) val = reg_3;
+		if _eq(c_reg, 4) val = reg_4;
+		if _eq(c_reg, 5) val = reg_5;
+		if _eq(c_reg, 6) val = reg_6;
+		if _eq(c_reg, 7) val = reg_7;
+		if _eq(c_reg, 8) val = reg_8;
+		if _eq(c_reg, 9) val = reg_9;
+
+		in(c_type);
+		c_type-=48;
+		in(c_num);
+		c_num-=48;
+
+		if _eq(c_type, 1) {
+			if _eq(c_num, 1) {
+				out(val);
+			}
+			if _eq(c_num, 2) {
+				in(val);
+			}
+		}
+
+		if _eq(c_type, 2) {
+			if _eq(c_num, 1) {
+				val += 1;
+			}
+			if _eq(c_num, 2) {
+				val -= 1;
+			}
+			if _eq(c_num, 3) {
+				var c_arg1;
+				var c_arg2;
+
+				in(c_arg1); c_arg1 -= 48;
+				in(c_arg2); c_arg2 -= 48;
+				_mul(val, val, c_arg1);
+				_mul(val, val, c_arg2);
+			}
+		}
+
+		if _eq(c_type, 3) {
+			if _eq(c_num, 1) {
+				val = 0;
+			}
+		}
+
+		if _eq(c_reg, 1) reg_1 = val;
+		if _eq(c_reg, 2) reg_2 = val;
+		if _eq(c_reg, 3) reg_3 = val;
+		if _eq(c_reg, 4) reg_4 = val;
+		if _eq(c_reg, 5) reg_5 = val;
+		if _eq(c_reg, 6) reg_6 = val;
+		if _eq(c_reg, 7) reg_7 = val;
+		if _eq(c_reg, 8) reg_8 = val;
+		if _eq(c_reg, 9) reg_9 = val;
+	}
+
+	in(input);
+}
+

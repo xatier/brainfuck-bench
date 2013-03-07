@@ -1,0 +1,31 @@
+
+macro func1(x, y)
+{
+	x += 1;
+	y += 1;
+}
+
+macro func2(*x, *y)
+{
+	x += 1;
+	y += 1;
+}
+
+var a = 48;
+var b = 49;
+
+out(a); out(b);
+out(10); // 0 1
+
+// both modified
+func1(a, *b);
+
+out(a); out(b);
+out(10); // 1 2
+
+// only b modified
+func2(a, *b);
+
+out(a); out(b);
+out(10); // 1 3
+

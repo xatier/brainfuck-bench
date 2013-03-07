@@ -1,0 +1,198 @@
+
+// This is an example of how to implement (1 dimensional)
+// arrays in bfc using inline brainf*ck code.
+//
+// Each cell uses in fact four memory cells:
+//
+//	0. The value moved up- or down
+//	1. A temp value (counter, copy-buffer)
+//	2. A temp value (end-of-array marker)
+//	3. The value itself
+
+// Writing works this way:
+//
+// 101	- write value to array.0
+// 102	- write position to array.1
+// 103	- write 0 to array.2
+// 104	- go to array.1
+//
+// 201	- while [1] is non zero
+// 202		- clean [0], [1] and set [2] of next cell
+// 203		- move [0] to the next cell
+// 204		- move [1] - 1 to the next cell
+// 205		- go to [1] of next cell
+//
+// 301	- clear [3]
+// 302	- move [0] to [3]
+// 303	- go to [2]
+//
+// 401	- while [2] is non zero
+// 402		- go to [2] of previous cell
+//
+// 501	- go to [1] (where we started)
+//
+macro array_write(array, pos, val)
+{
+	// 101 - 104
+	array.0 = val;
+	array.1 = pos;
+	array.2 = 0;
+	"<array.1>";
+
+	// 201	- while [1] is non zero
+	'[';
+		// 202 - clean [0], [1] and set [2] of next cell
+		'<<<[-]<[-]<[-]+>>>>>';
+
+		// 203 - move [0] to the next cell
+		'>[<<<<+>>>>-]<';
+
+		// 204 - move [1] - 1 to the next cell
+		'-[<<<<+>>>>-]';
+
+		// 205 - go to [1] of next cell
+		'<<<<';
+	']';
+
+	// 301 - clear [3]
+	'<<[-]>>';
+
+	// 302 - move [0] to [3]
+	'>[<<<+>>>-]<';
+
+	// 303 - go to [2]
+	'<';
+
+	// 401 - while [2] is non zero
+	'[';
+		// 402 - go to [2] of previous cell
+		'>>>>';
+	']';
+
+	// 501 - go to [1] (where we started)
+	'>';
+}
+
+// Reading works this way:
+//
+// 101	- write 0 to array.0
+// 102	- write position to array.1
+// 103	- write 0 to array.2
+// 104	- go to array.1
+//
+// 201	- while [1] is non zerro
+// 202		- clean [0], [1] and set [2] of next cell
+// 203		- move [1] - 1 to the next cell
+// 204		- go to [1] of next cell
+//
+// 301	- move [3] to [0] and [1]
+// 302	- move [1] back to [3]
+// 303	- go to [2]
+//
+// 401	- while [2] is non zero
+// 402		- move [0] to previous call
+// 403		- go to [2] of previous call
+//
+// 501	- go to [1] (where we started)
+// 502	- copy result to val
+//
+macro array_read(array, pos, val)
+{
+	// 101 - 104
+	array.0 = 0;
+	array.1 = pos;
+	array.2 = 0;
+	"<array.1>";
+
+	// 201 - while [1] is non zerro
+	'[';
+		// 202 - clean [0], [1] and set [2] of next cell
+		'<<<[-]<[-]<[-]+>>>>>';
+
+		// 203 - move [1] - 1 to the next cell
+		'-[<<<<+>>>>-]';
+
+		// 204 - go to [1] of next cell
+		'<<<<';
+	']';
+
+	// 301 - move [3] to [0] and [1]
+	'<<[->>+>+<<<]>>';
+
+	// 302 - move [1] back to [3]
+	'[-<<+>>]';
+
+	// 303 - go to [2]
+	'<';
+
+	// 401 - while [2] is non zero
+	'[';
+		// 402 - move [0] to previous call
+		'>>[->>>>+<<<<]<<';
+
+		// 403 - go to [2] of previous call
+		'>>>>';
+	']';
+
+	// 501 - go to [1] (where we started)
+	'>';
+
+	// 502 - copy result to val
+	val = array.0;
+}
+
+// a straight-forward bubblesort implementation
+//
+macro bubble_sort(array, maxidx)
+{
+	var keep_running = 1;
+
+	while (keep_running)
+	{
+		var i0, i1; 
+
+		keep_running = 0;
+
+		i0 = 0;
+		i1 = 1;
+
+		while _neq(i0, maxidx) {
+			var tmp1, tmp2;
+
+			array_read(array, i0, tmp1);
+			array_read(array, i1, tmp2);
+
+			if _lt(tmp2, tmp1) {
+				array_write(array, i1, tmp1);
+				array_write(array, i0, tmp2);
+				keep_running = 1;
+			}
+
+			i0, i1 += 1;
+		}
+	}
+}
+
+// array with 8 cells
+var demo.31;
+
+array_write(demo, 0, 5);
+array_write(demo, 1, 7);
+array_write(demo, 2, 2);
+array_write(demo, 3, 9);
+array_write(demo, 4, 4);
+array_write(demo, 5, 3);
+array_write(demo, 6, 8);
+array_write(demo, 7, 0);
+
+bubble_sort(demo, 7);
+
+demo.3  += 48; out(demo.3 );
+demo.7  += 48; out(demo.7 );
+demo.11 += 48; out(demo.11);
+demo.15 += 48; out(demo.15);
+demo.19 += 48; out(demo.19);
+demo.23 += 48; out(demo.23);
+demo.27 += 48; out(demo.27);
+demo.31 += 48; out(demo.31);
+

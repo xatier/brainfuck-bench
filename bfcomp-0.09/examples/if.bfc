@@ -1,0 +1,12 @@
+
+var a = 1;
+var b = 0;
+
+if (a)
+	out(65);
+else
+	if (b)
+		out(66);
+	else
+		out(67);
+

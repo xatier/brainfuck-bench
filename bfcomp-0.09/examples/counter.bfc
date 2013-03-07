@@ -1,0 +1,21 @@
+
+var i;
+
+i = 10;
+
+while (i) {
+	var c, x, o;
+
+	c = 47;
+	c += i;
+
+	x = c;
+	o = 88;
+	x -= 53;
+
+	if (x) o = c;
+
+	out(o);
+	i -= 1;
+}
+

@@ -1,0 +1,20 @@
+
+var nl = 10;
+var sp = 32;
+
+var a = 48;
+while _neq(a, 58)
+{
+	out(a);
+	out(sp);
+
+	var b = 48;
+	while _neq(b, 58) {
+		out(b);
+		b += 1;
+	}
+
+	out(nl);
+	a += 1;
+}
+
